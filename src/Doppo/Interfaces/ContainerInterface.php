@@ -15,24 +15,32 @@
 
 namespace Doppo\Interfaces;
 
+use Doppo\Definition\ParameterDefinitionChain;
+use Doppo\Definition\ServiceDefinitionChain;
+
 /**
- * Interface DependencyInjectionContainerInterface
+ * Interface ContainerInterface
  */
-interface DependencyInjectionContainerInterface
+interface ContainerInterface
 {
     /**
-     * Return compiled service configuration
+     * Return compiled service definitions
      *
-     * @return array Compiled service configuration
+     * @return ServiceDefinitionChain Compiled service definitions
      */
-    public function getCompiledServiceConfiguration();
+    public function getCompiledServiceDefinitions();
 
     /**
-     * Return compiled configuration
+     * Return compiled parameter definitions
      *
-     * @return array Compiled configuration
+     * @return ParameterDefinitionChain Compiled parameter definitions
      */
-    public function getCompiledParameterConfiguration();
+    public function getCompiledParameterDefinitions();
+
+    /**
+     * Compile container
+     */
+    public function compile();
 
     /**
      * Get service instance

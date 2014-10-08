@@ -18,7 +18,16 @@ namespace Doppo;
 use Exception;
 use ReflectionClass;
 
-use Doppo\Interfaces\DependencyInjectionContainerInterface;
+use Doppo\Argument\Argument;
+use Doppo\Argument\ArgumentChain;
+use Doppo\Argument\ParameterArgument;
+use Doppo\Argument\ServiceArgument;
+use Doppo\Argument\ValueArgument;
+use Doppo\Definition\ParameterDefinition;
+use Doppo\Definition\ParameterDefinitionChain;
+use Doppo\Definition\ServiceDefinition;
+use Doppo\Definition\ServiceDefinitionChain;
+use Doppo\Interfaces\ContainerInterface;
 
 /**
  * Class Doppo
@@ -32,7 +41,8 @@ use Doppo\Interfaces\DependencyInjectionContainerInterface;
  *              '@my_other_service',
  *              '~my_parameter',
  *              'simple_value',
- *          )
+ *          ),
+ *          "scope" => "private"
  *      ),
  *      'my_other_service' => array(
  *          'class' => 'My\Class\Namespace',
@@ -43,12 +53,12 @@ use Doppo\Interfaces\DependencyInjectionContainerInterface;
  * ** Usage
  *
  * $doppo = new Doppo($config);
+ * $doppo->compile();
  *
  * $serviceInstance = $doppo->get('my_service');
  * $parameterValue = $doppo->getParameter('my_parameter');
- * $containerCompiledConfiguration = $doppo->getCompiledConfiguration();
  */
-class Doppo implements DependencyInjectionContainerInterface
+class Doppo implements ContainerInterface
 {
     /**
      * @var string
@@ -67,16 +77,30 @@ class Doppo implements DependencyInjectionContainerInterface
     /**
      * @var array
      *
+     * Configuration
+     */
+    private $configuration;
+
+    /**
+     * @var ParameterDefinitionChain
+     *
      * Parameters
      */
     private $parameters;
 
     /**
-     * @var array
+     * @var ServiceDefinitionChain
      *
      * Services
      */
     private $services;
+
+    /**
+     * @var boolean
+     *
+     * Compiled
+     */
+    private $compiled;
 
     /**
      * @var array
@@ -94,20 +118,40 @@ class Doppo implements DependencyInjectionContainerInterface
      */
     public function __construct(array $configuration)
     {
-        $this->services = array();
-        $this->parameters = array();
-        $this->compile($configuration);
-        $this->checkServiceArgumentsReferences();
+        $this->configuration = $configuration;
+        $this->services = new ServiceDefinitionChain();
+        $this->parameters = new ParameterDefinitionChain();
+        $this->compiled = false;
     }
 
     /**
-     * Compile the container
+     * Compile container
+     *
+     * @throws Exception Container already compiled
+     */
+    public function compile()
+    {
+        if (true === $this->compiled) {
+
+            throw new Exception(
+                'Container already compiled'
+            );
+        }
+
+        $this->compileConfiguration($this->configuration);
+        $this->checkServiceArgumentsReferences();
+
+        $this->compiled = true;
+    }
+
+    /**
+     * Compile the configuration
      *
      * @param array $configuration Container Configuration
      *
      * @throws Exception Element type is not correct
      */
-    protected function compile(array $configuration)
+    private function compileConfiguration(array $configuration)
     {
         foreach ($configuration as $configurationName => $configurationElement) {
 
@@ -134,7 +178,7 @@ class Doppo implements DependencyInjectionContainerInterface
      *
      * @throws Exception Service class not found
      */
-    protected function compileService($serviceName, array $serviceConfiguration)
+    private function compileService($serviceName, array $serviceConfiguration)
     {
         if (!class_exists($serviceConfiguration['class'])) {
 
@@ -145,10 +189,102 @@ class Doppo implements DependencyInjectionContainerInterface
             ? $serviceConfiguration['arguments']
             : array();
 
-        $this->services[$serviceName] = array(
-            'class'     => '\\' . ltrim($serviceConfiguration['class'], '\\'),
-            'arguments' => array_values($arguments),
-        );
+        $this
+            ->services
+            ->addServiceDefinition(
+                new ServiceDefinition(
+                    $serviceName,
+                    '\\' . ltrim($serviceConfiguration['class'], '\\'),
+                    $this->compileArguments($arguments)
+                )
+            );
+    }
+
+    /**
+     * Compile arguments
+     *
+     * @param array $arguments Argument configuration
+     *
+     * @return ArgumentChain Argument chain
+     */
+    private function compileArguments(array $arguments)
+    {
+        $argumentChain = new ArgumentChain();
+
+        foreach ($arguments as $argument) {
+
+            $argumentChain->addArgument(
+                $this->compileArgument($argument)
+            );
+        }
+
+        return $argumentChain;
+    }
+
+    /**
+     * Given an argument return its definition
+     *
+     * @param string $argument Argument
+     *
+     * @return Argument Argument
+     */
+    private function compileArgument($argument)
+    {
+        $argumentDefinition = null;
+
+        if (is_string($argument) && strpos($argument, Doppo::SERVICE_PREFIX) === 0) {
+
+            $cleanArgument = preg_replace('#^' . Doppo::SERVICE_PREFIX . '{1}#', '', $argument);
+
+            $argumentDefinition = $this->compileServiceArgument($cleanArgument);
+
+        } elseif (is_string($argument) && strpos($argument, Doppo::PARAMETER_PREFIX) === 0) {
+
+            $cleanArgument = preg_replace('#^' . Doppo::PARAMETER_PREFIX . '{1}#', '', $argument);
+
+            $argumentDefinition = $this->compileParameterArgument($cleanArgument);
+        } else {
+
+            $argumentDefinition = $this->compileValueArgument($argument);
+        }
+
+        return $argumentDefinition;
+    }
+
+    /**
+     * Given a service argument value return its definition
+     *
+     * @param string $argumentValue Argument value
+     *
+     * @return ServiceArgument Service argument
+     */
+    private function compileServiceArgument($argumentValue)
+    {
+        return new ServiceArgument($argumentValue);
+    }
+
+    /**
+     * Given a parameter argument value return its definition
+     *
+     * @param string $argumentValue Argument value
+     *
+     * @return ParameterArgument Parameter argument
+     */
+    private function compileParameterArgument($argumentValue)
+    {
+        return new ParameterArgument($argumentValue);
+    }
+
+    /**
+     * Given a value argument value return its definition
+     *
+     * @param mixed $argumentValue Argument value
+     *
+     * @return ValueArgument Value argument
+     */
+    private function compileValueArgument($argumentValue)
+    {
+        return new ValueArgument($argumentValue);
     }
 
     /**
@@ -157,9 +293,16 @@ class Doppo implements DependencyInjectionContainerInterface
      * @param string $parameterName  Parameter name
      * @param string $parameterValue Parameter value
      */
-    protected function compileParameter($parameterName, $parameterValue)
+    private function compileParameter($parameterName, $parameterValue)
     {
-        $this->parameters[$parameterName] = $parameterValue;
+        $this
+            ->parameters
+            ->addParameterDefinition(
+                new ParameterDefinition(
+                    $parameterName,
+                    $parameterValue
+                )
+            );
     }
 
     /**
@@ -171,63 +314,50 @@ class Doppo implements DependencyInjectionContainerInterface
      *
      * We will now check that all service arguments have correct references.
      */
-    protected function checkServiceArgumentsReferences()
+    private function checkServiceArgumentsReferences()
     {
-        foreach ($this->services as $serviceName => $service) {
+        $this
+            ->services
+            ->each(function (ServiceDefinition $serviceDefinition) {
 
-            if (!isset($service['arguments'])) {
+                $serviceDefinition
+                    ->getArgumentChain()
+                    ->each(function (Argument $argument) use ($serviceDefinition) {
 
-                continue;
-            }
+                        $argumentValue = $argument->getValue();
+                        if ($argument instanceof ServiceArgument) {
 
-            $arguments = $service['arguments'];
-            foreach ($arguments as $argument) {
+                            if (!$this->services->has($argumentValue)) {
 
-                if (!is_string($argument)) {
+                                throw new Exception(
+                                    sprintf(
+                                        'Service "%s" not found in "@%s" arguments list',
+                                        $argumentValue,
+                                        $serviceDefinition->getName()
+                                    )
+                                );
+                            }
+                        }
 
-                    continue;
-                }
+                        if ($argument instanceof ParameterArgument) {
 
-                /**
-                 * Service reference
-                 */
-                if (0 === strpos($argument, self::SERVICE_PREFIX)) {
+                            if (!$this->parameters->has($argumentValue)) {
 
-                    $cleanArgument = preg_replace('#^' . self::SERVICE_PREFIX . '{1}#', '', $argument);
-                    if (!isset($this->services[$cleanArgument])) {
-
-                        throw new Exception(
-                            sprintf(
-                                'Service "%s" not found in "@%s" arguments list',
-                                $cleanArgument,
-                                $serviceName
-                            )
-                        );
-                    }
-                }
-
-                /**
-                 * Parameter reference
-                 */
-                if (0 === strpos($argument, self::PARAMETER_PREFIX)) {
-
-                    $cleanArgument = preg_replace('#^(' . self::PARAMETER_PREFIX . '){1}#', '', $argument);
-                    if (!isset($this->parameters[$cleanArgument])) {
-
-                        throw new Exception(
-                            sprintf('Parameter "%s" not found in "@%s" arguments list',
-                                $cleanArgument,
-                                $serviceName
-                            )
-                        );
-                    }
-                }
-            }
-        }
+                                throw new Exception(
+                                    sprintf(
+                                        'Service "%s" not found in "@%s" arguments list',
+                                        $argumentValue,
+                                        $serviceDefinition->getName()
+                                    )
+                                );
+                            }
+                        }
+                    });
+            });
     }
 
     /**
-     * Build service.
+     * Build service. We assume that the service exists and can be build
      *
      * @param string $serviceName Service Name
      *
@@ -235,35 +365,35 @@ class Doppo implements DependencyInjectionContainerInterface
      */
     protected function buildExistentService($serviceName)
     {
-        $serviceConfiguration = $this->services[$serviceName];
-        $serviceReflectionClass = new ReflectionClass($serviceConfiguration['class']);
+        $serviceDefinition = $this->services->get($serviceName);
+        $serviceReflectionClass = new ReflectionClass($serviceDefinition->getClass());
         $serviceArguments = array();
 
         /**
-         * Each argument is built using recursivity. If the argument is defined
-         * as a service, with (@), we will return the value of the get() call.
+         * Each argument is built recursively. If the argument is defined
+         * as a service we will return the value of the get() call.
          *
-         * Otherwise, if is defined as a parameter (%) we will return the
+         * Otherwise, if is defined as a parameter we will return the
          * parameter value
          *
          * Otherwise, we will treat the value as a plain value, not precessed.
          */
-        foreach ($serviceConfiguration['arguments'] as $argument) {
+        $serviceDefinition
+            ->getArgumentChain()
+            ->each(function (Argument $argument) use (&$serviceArguments) {
 
-            if (is_string($argument) && strpos($argument, self::SERVICE_PREFIX) === 0) {
+                $argumentValue = $argument->getValue();
+                if ($argument instanceof ServiceArgument) {
 
-                $cleanArgument = preg_replace('#^' . self::SERVICE_PREFIX . '{1}#', '', $argument);
-                $serviceArguments[] = $this->get($cleanArgument);
+                    $serviceArguments[] = $this->get($argumentValue);
+                } elseif ($argument instanceof ParameterArgument) {
 
-            } elseif (is_string($argument) && strpos($argument, self::PARAMETER_PREFIX) === 0) {
+                    $serviceArguments[] = $this->getParameter($argumentValue);
+                } else {
 
-                $cleanArgument = preg_replace('#^' . self::PARAMETER_PREFIX . '{1}#', '', $argument);
-                $serviceArguments[] = $this->getParameter($cleanArgument);
-            } else {
-
-                $serviceArguments[] = $argument;
-            }
-        }
+                    $serviceArguments[] = $argumentValue;
+                }
+            });
 
         return $serviceReflectionClass->newInstanceArgs($serviceArguments);
     }
@@ -291,7 +421,7 @@ class Doppo implements DependencyInjectionContainerInterface
          * Otherwise, we must check if the service defined with its name has
          * been compiled
          */
-        if (!isset($this->services[$serviceName])) {
+        if (!$this->services->has($serviceName)) {
 
             throw new Exception(
                 sprintf(
@@ -315,7 +445,7 @@ class Doppo implements DependencyInjectionContainerInterface
      */
     public function getParameter($parameterName)
     {
-        if (!isset($this->parameters[$parameterName])) {
+        if (!$this->parameters->has($parameterName)) {
 
             throw new Exception(
                 sprintf(
@@ -325,25 +455,28 @@ class Doppo implements DependencyInjectionContainerInterface
             );
         }
 
-        return $this->parameters[$parameterName];
+        return $this
+            ->parameters
+            ->get($parameterName)
+            ->getValue();
     }
 
     /**
-     * Return compiled service configuration
+     * Return compiled service definitions
      *
-     * @return array Compiled service configuration
+     * @return ServiceDefinitionChain Compiled service definitions
      */
-    public function getCompiledServiceConfiguration()
+    public function getCompiledServiceDefinitions()
     {
         return $this->services;
     }
 
     /**
-     * Return compiled configuration
+     * Return compiled parameter definitions
      *
-     * @return array Compiled configuration
+     * @return ParameterDefinitionChain Compiled parameter definitions
      */
-    public function getCompiledParameterConfiguration()
+    public function getCompiledParameterDefinitions()
     {
         return $this->parameters;
     }

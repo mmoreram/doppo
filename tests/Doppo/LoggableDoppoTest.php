@@ -19,14 +19,14 @@ use Exception;
 use Psr\Log\LoggerInterface;
 
 use Doppo\Doppo;
-use Doppo\Interfaces\DependencyInjectionContainerInterface;
-use Doppo\LoggedDoppo;
+use Doppo\Interfaces\ContainerInterface;
+use Doppo\LoggableDoppo;
 use Doppo\Tests\Abstracts\AbstractDoppoTest;
 
 /**
- * Class LoggedDoppoTest
+ * Class LoggableDoppoTest
  */
-class LoggedDoppoTest extends AbstractDoppoTest
+class LoggableDoppoTest extends AbstractDoppoTest
 {
     /**
      * @var LoggerInterface
@@ -48,55 +48,67 @@ class LoggedDoppoTest extends AbstractDoppoTest
      *
      * @param array $configuration Configuration
      *
-     * @return DependencyInjectionContainerInterface Doppo
+     * @return ContainerInterface Doppo
      */
     public function getDoppoInstance(array $configuration)
     {
-        return new LoggedDoppo(
+        return new LoggableDoppo(
             new Doppo($configuration),
             $this->logger
         );
     }
 
     /**
-     * Test if logger is called when get() is called
-     */
-    public function testLogCallOnGetOK()
-    {
-        $doppo = $this->getDoppoInstance($this->standardConfiguration);
-
-        $this
-            ->logger
-            ->expects($this->once())
-            ->method('debug');
-
-        $this
-            ->logger
-            ->expects($this->never())
-            ->method('error');
-
-        $doppo->get('foo');
-    }
-
-    /**
-     * Test if logger is called when get() is called
+     * Test if error logger is called when get() fails
      *
      * @expectedException Exception
      */
-    public function testLogCallOnGetFail()
+    public function testErrorLogCallOnGetFail()
     {
         $doppo = $this->getDoppoInstance($this->standardConfiguration);
 
         $this
             ->logger
-            ->expects($this->once())
-            ->method('debug');
+            ->expects($this->atLeastOnce())
+            ->method('error');
+
+        $doppo->compile();
+        $doppo->get('zoo');
+    }
+
+    /**
+     * Test if error logger is called when getParameter() fails
+     *
+     * @expectedException Exception
+     */
+    public function testErrorLogCallOnGetParameterFail()
+    {
+        $doppo = $this->getDoppoInstance($this->standardConfiguration);
 
         $this
             ->logger
-            ->expects($this->once())
+            ->expects($this->atLeastOnce())
             ->method('error');
 
-        $doppo->get('zoo');
+        $doppo->compile();
+        $doppo->getParameter('another.parameter');
+    }
+
+    /**
+     * Test if error logger is called when compile is called more than once
+     *
+     * @expectedException Exception
+     */
+    public function testLogCallOnCompileMoreThanOnce()
+    {
+        $doppo = $this->getDoppoInstance($this->standardConfiguration);
+
+        $this
+            ->logger
+            ->expects($this->atLeastOnce())
+            ->method('error');
+
+        $doppo->compile();
+        $doppo->compile();
     }
 }

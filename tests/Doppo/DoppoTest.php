@@ -16,7 +16,7 @@
 namespace Doppo\Tests;
 
 use Doppo\Doppo;
-use Doppo\Interfaces\DependencyInjectionContainerInterface;
+use Doppo\Interfaces\ContainerInterface;
 use Doppo\Tests\Abstracts\AbstractDoppoTest;
 use Doppo\Tests\Data\Moo;
 
@@ -30,7 +30,7 @@ class DoppoTest extends AbstractDoppoTest
      *
      * @param array $configuration Configuration
      *
-     * @return DependencyInjectionContainerInterface Doppo
+     * @return ContainerInterface Doppo
      */
     public function getDoppoInstance(array $configuration)
     {
@@ -56,6 +56,7 @@ class DoppoTest extends AbstractDoppoTest
             ->method('buildExistentService')
             ->will($this->returnValue(new Moo()));
 
+        $doppo->compile();
         $doppo->get('moo');
         $doppo->get('moo');
     }

@@ -12,14 +12,13 @@
  *
  * @author Marc Morera <yuhu@mmoreram.com>
  */
- 
-/**
- * Doppo container class
- */
-class DoppoCache
-{
-    {% parameters_content %}
 
-    {% services_content %}
+namespace Doppo\Argument;
+
+/**
+ * Class ParameterArgument
+ */
+class ParameterArgument extends Argument
+{
+
 }
- 

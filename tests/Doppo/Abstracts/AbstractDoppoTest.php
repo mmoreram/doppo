@@ -18,7 +18,7 @@ namespace Doppo\Tests\Abstracts;
 use Exception;
 use PHPUnit_Framework_TestCase;
 
-use Doppo\Interfaces\DependencyInjectionContainerInterface;
+use Doppo\Interfaces\ContainerInterface;
 
 /**
  * Abstract Class AbstractDoppoTest
@@ -30,7 +30,7 @@ abstract class AbstractDoppoTest extends PHPUnit_Framework_TestCase
      *
      * @param array $configuration Configuration
      *
-     * @return DependencyInjectionContainerInterface Doppo
+     * @return ContainerInterface Doppo
      */
     abstract public function getDoppoInstance(array $configuration);
 
@@ -64,9 +64,22 @@ abstract class AbstractDoppoTest extends PHPUnit_Framework_TestCase
     /**
      * Test container compilation
      */
-    public function testCreate()
+    public function testCompile()
     {
-        $this->getDoppoInstance($this->standardConfiguration);
+        $doppo = $this->getDoppoInstance($this->standardConfiguration);
+        $doppo->compile();
+    }
+
+    /**
+     * Test container compilation more than once
+     *
+     * @expectedException Exception
+     */
+    public function testCompileMoreThanOnce()
+    {
+        $doppo = $this->getDoppoInstance($this->standardConfiguration);
+        $doppo->compile();
+        $doppo->compile();
     }
 
     /**
@@ -75,9 +88,10 @@ abstract class AbstractDoppoTest extends PHPUnit_Framework_TestCase
      * @dataProvider dataCompilationFailure
      * @expectedException Exception
      */
-    public function testCreateFailure($config)
+    public function testCompileFailure($config)
     {
-        $this->getDoppoInstance($config);
+        $doppo = $this->getDoppoInstance($config);
+        $doppo->compile();
     }
 
     /**
@@ -152,6 +166,7 @@ abstract class AbstractDoppoTest extends PHPUnit_Framework_TestCase
     public function testGetOK()
     {
         $doppo = $this->getDoppoInstance($this->standardConfiguration);
+        $doppo->compile();
 
         $this->assertInstanceOf('Doppo\Tests\Data\Foo', $doppo->get('foo'));
         $this->assertInstanceOf('Doppo\Tests\Data\Goo', $doppo->get('goo'));
@@ -180,6 +195,7 @@ abstract class AbstractDoppoTest extends PHPUnit_Framework_TestCase
     public function testGetParameterOK()
     {
         $doppo = $this->getDoppoInstance($this->standardConfiguration);
+        $doppo->compile();
 
         $this->assertEquals('my.value', $doppo->getParameter('my.parameter'));
     }
@@ -193,6 +209,7 @@ abstract class AbstractDoppoTest extends PHPUnit_Framework_TestCase
     public function testGetParameterFail($parameterName)
     {
         $doppo = $this->getDoppoInstance($this->standardConfiguration);
+        $doppo->compile();
         $doppo->getParameter($parameterName);
     }
 

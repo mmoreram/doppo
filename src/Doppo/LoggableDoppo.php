@@ -15,18 +15,20 @@
 
 namespace Doppo;
 
+use Doppo\Definition\ParameterDefinitionChain;
+use Doppo\Definition\ServiceDefinitionChain;
 use Exception;
 use Psr\Log\LoggerInterface;
 
-use Doppo\Interfaces\DependencyInjectionContainerInterface;
+use Doppo\Interfaces\ContainerInterface;
 
 /**
- * Class LoggedDoppo
+ * Class LoggableDoppo
  */
-class LoggedDoppo implements DependencyInjectionContainerInterface
+class LoggableDoppo implements ContainerInterface
 {
     /**
-     * @var DependencyInjectionContainerInterface
+     * @var ContainerInterface
      *
      * doppo
      */
@@ -42,11 +44,11 @@ class LoggedDoppo implements DependencyInjectionContainerInterface
     /**
      * Construct method
      *
-     * @param DependencyInjectionContainerInterface $doppo  Doppo
-     * @param LoggerInterface                       $logger Logger
+     * @param ContainerInterface $doppo  Doppo
+     * @param LoggerInterface    $logger Logger
      */
     public function __construct(
-        DependencyInjectionContainerInterface $doppo,
+        ContainerInterface $doppo,
         LoggerInterface $logger
     )
     {
@@ -55,23 +57,40 @@ class LoggedDoppo implements DependencyInjectionContainerInterface
     }
 
     /**
-     * Return compiled service configuration
-     *
-     * @return array Compiled service configuration
+     * Compile container
      */
-    public function getCompiledServiceConfiguration()
+    public function compile()
     {
-        $this->doppo->getCompiledServiceConfiguration();
+        $this->logDebugContainerAction('Compiling container');
+
+        try {
+
+            $this->doppo->compile();
+        } catch (Exception $e) {
+
+            $this->logErrorContainerAction('Container compilation failed');
+            throw $e;
+        }
     }
 
     /**
-     * Return compiled configuration
+     * Return compiled service definitions
      *
-     * @return array Compiled configuration
+     * @return ServiceDefinitionChain Compiled service definitions
      */
-    public function getCompiledParameterConfiguration()
+    public function getCompiledServiceDefinitions()
     {
-        $this->doppo->getCompiledParameterConfiguration();
+        return $this->doppo->getCompiledServiceDefinitions();
+    }
+
+    /**
+     * Return compiled parameter definitions
+     *
+     * @return ParameterDefinitionChain Compiled parameter definitions
+     */
+    public function getCompiledParameterDefinitions()
+    {
+        return $this->doppo->getCompiledParameterDefinitions();
     }
 
     /**
@@ -129,7 +148,7 @@ class LoggedDoppo implements DependencyInjectionContainerInterface
      *
      * @param string $log Log
      */
-    protected function logDebugContainerAction($log = '')
+    protected function logDebugContainerAction($log)
     {
         $this
             ->logger
