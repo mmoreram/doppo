@@ -15,8 +15,6 @@
 
 namespace Doppo;
 
-use Exception;
-
 use Doppo\Cache\Cache;
 use Doppo\Exception\DoppoAlreadyCompiledException;
 use DoppoCache;
