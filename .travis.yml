@@ -11,6 +11,7 @@ matrix:
         - php: hhvm
 
 install:
+    - composer selfupdate
     - composer install --prefer-source --no-interaction
 
 script:
