@@ -42,7 +42,7 @@ use Doppo\Interfaces\ContainerInterface;
  *              '~my_parameter',
  *              'simple_value',
  *          ),
- *          "scope" => "private"
+ *          "public" => true
  *      ),
  *      'my_other_service' => array(
  *          'class' => 'My\Class\Namespace',
@@ -79,46 +79,53 @@ class Doppo implements ContainerInterface
      *
      * Configuration
      */
-    private $configuration;
+    protected $configuration;
+
+    /**
+     * @var boolean
+     *
+     * Debug mode
+     */
+    private $debug;
 
     /**
      * @var ParameterDefinitionChain
      *
      * Parameters
      */
-    private $parameters;
+    protected $parameters;
 
     /**
      * @var ServiceDefinitionChain
      *
      * Services
      */
-    private $services;
+    protected $services;
 
     /**
      * @var boolean
      *
      * Compiled
      */
-    private $compiled;
+    protected $compiled;
 
     /**
      * @var array
      *
      * ServicesInstances
      */
-    private $serviceInstances;
+    protected $serviceInstances;
 
     /**
      * Constructor
      *
-     * @param array $configuration Container Configuration
-     *
-     * @return self New instance of this object
+     * @param array   $configuration Container Configuration
+     * @param boolean $debug         Debug mode
      */
-    public function __construct(array $configuration)
+    public function __construct(array $configuration, $debug)
     {
         $this->configuration = $configuration;
+        $this->debug = $debug;
         $this->services = new ServiceDefinitionChain();
         $this->parameters = new ParameterDefinitionChain();
         $this->compiled = false;
@@ -145,13 +152,21 @@ class Doppo implements ContainerInterface
     }
 
     /**
+     * Is debug
+     */
+    public function isDebug()
+    {
+        return $this->debug;
+    }
+
+    /**
      * Compile the configuration
      *
      * @param array $configuration Container Configuration
      *
      * @throws Exception Element type is not correct
      */
-    private function compileConfiguration(array $configuration)
+    protected function compileConfiguration(array $configuration)
     {
         foreach ($configuration as $configurationName => $configurationElement) {
 
@@ -178,7 +193,7 @@ class Doppo implements ContainerInterface
      *
      * @throws Exception Service class not found
      */
-    private function compileService($serviceName, array $serviceConfiguration)
+    protected function compileService($serviceName, array $serviceConfiguration)
     {
         if (!class_exists($serviceConfiguration['class'])) {
 
@@ -189,13 +204,18 @@ class Doppo implements ContainerInterface
             ? $serviceConfiguration['arguments']
             : array();
 
+        $public = isset($serviceConfiguration['public'])
+            ? $serviceConfiguration['public']
+            : true;
+
         $this
             ->services
             ->addServiceDefinition(
                 new ServiceDefinition(
                     $serviceName,
                     '\\' . ltrim($serviceConfiguration['class'], '\\'),
-                    $this->compileArguments($arguments)
+                    $this->compileArguments($arguments),
+                    $public
                 )
             );
     }
@@ -207,7 +227,7 @@ class Doppo implements ContainerInterface
      *
      * @return ArgumentChain Argument chain
      */
-    private function compileArguments(array $arguments)
+    protected function compileArguments(array $arguments)
     {
         $argumentChain = new ArgumentChain();
 
@@ -228,7 +248,7 @@ class Doppo implements ContainerInterface
      *
      * @return Argument Argument
      */
-    private function compileArgument($argument)
+    protected function compileArgument($argument)
     {
         $argumentDefinition = null;
 
@@ -258,7 +278,7 @@ class Doppo implements ContainerInterface
      *
      * @return ServiceArgument Service argument
      */
-    private function compileServiceArgument($argumentValue)
+    protected function compileServiceArgument($argumentValue)
     {
         return new ServiceArgument($argumentValue);
     }
@@ -270,7 +290,7 @@ class Doppo implements ContainerInterface
      *
      * @return ParameterArgument Parameter argument
      */
-    private function compileParameterArgument($argumentValue)
+    protected function compileParameterArgument($argumentValue)
     {
         return new ParameterArgument($argumentValue);
     }
@@ -282,7 +302,7 @@ class Doppo implements ContainerInterface
      *
      * @return ValueArgument Value argument
      */
-    private function compileValueArgument($argumentValue)
+    protected function compileValueArgument($argumentValue)
     {
         return new ValueArgument($argumentValue);
     }
@@ -293,7 +313,7 @@ class Doppo implements ContainerInterface
      * @param string $parameterName  Parameter name
      * @param string $parameterValue Parameter value
      */
-    private function compileParameter($parameterName, $parameterValue)
+    protected function compileParameter($parameterName, $parameterValue)
     {
         $this
             ->parameters
@@ -314,7 +334,7 @@ class Doppo implements ContainerInterface
      *
      * We will now check that all service arguments have correct references.
      */
-    private function checkServiceArgumentsReferences()
+    protected function checkServiceArgumentsReferences()
     {
         $this
             ->services
@@ -459,25 +479,5 @@ class Doppo implements ContainerInterface
             ->parameters
             ->get($parameterName)
             ->getValue();
-    }
-
-    /**
-     * Return compiled service definitions
-     *
-     * @return ServiceDefinitionChain Compiled service definitions
-     */
-    public function getCompiledServiceDefinitions()
-    {
-        return $this->services;
-    }
-
-    /**
-     * Return compiled parameter definitions
-     *
-     * @return ParameterDefinitionChain Compiled parameter definitions
-     */
-    public function getCompiledParameterDefinitions()
-    {
-        return $this->parameters;
     }
 }

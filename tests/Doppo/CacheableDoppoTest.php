@@ -16,7 +16,6 @@
 namespace Doppo\Tests;
 
 use Doppo\CacheableDoppo;
-use Doppo\Doppo;
 use Doppo\Interfaces\ContainerInterface;
 use Doppo\Tests\Abstracts\AbstractDoppoTest;
 
@@ -35,9 +34,9 @@ class CacheableDoppoTest extends AbstractDoppoTest
     public function getDoppoInstance(array $configuration)
     {
         return new CacheableDoppo(
-            new Doppo($configuration),
-            sys_get_temp_dir() . '/doppo.cache.php',
-            true
+            $configuration,
+            true,
+            sys_get_temp_dir() . '/doppo.cache.php'
         );
     }
 }

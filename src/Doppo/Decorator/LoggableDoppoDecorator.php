@@ -13,26 +13,24 @@
  * @author Marc Morera <yuhu@mmoreram.com>
  */
 
-namespace Doppo;
+namespace Doppo\Decorator;
 
-use Doppo\Definition\ParameterDefinitionChain;
-use Doppo\Definition\ServiceDefinitionChain;
 use Exception;
 use Psr\Log\LoggerInterface;
 
 use Doppo\Interfaces\ContainerInterface;
 
 /**
- * Class LoggableDoppo
+ * Class LoggableDoppoDecorator
  */
-class LoggableDoppo implements ContainerInterface
+class LoggableDoppoDecorator implements ContainerInterface
 {
     /**
      * @var ContainerInterface
      *
-     * doppo
+     * container
      */
-    protected $doppo;
+    protected $container;
 
     /**
      * @var LoggerInterface
@@ -44,15 +42,15 @@ class LoggableDoppo implements ContainerInterface
     /**
      * Construct method
      *
-     * @param ContainerInterface $doppo  Doppo
-     * @param LoggerInterface    $logger Logger
+     * @param ContainerInterface $container container
+     * @param LoggerInterface    $logger    Logger
      */
     public function __construct(
-        ContainerInterface $doppo,
+        ContainerInterface $container,
         LoggerInterface $logger
     )
     {
-        $this->doppo = $doppo;
+        $this->container = $container;
         $this->logger = $logger;
     }
 
@@ -61,36 +59,23 @@ class LoggableDoppo implements ContainerInterface
      */
     public function compile()
     {
-        $this->logDebugContainerAction('Compiling container');
+        if ($this->container->isDebug()) {
+
+            $this->logDebugContainerAction('Compiling container');
+        }
 
         try {
 
-            $this->doppo->compile();
+            $this->container->compile();
         } catch (Exception $e) {
 
-            $this->logErrorContainerAction('Container compilation failed');
+            if ($this->container->isDebug()) {
+
+                $this->logErrorContainerAction('Container compilation failed');
+            }
+
             throw $e;
         }
-    }
-
-    /**
-     * Return compiled service definitions
-     *
-     * @return ServiceDefinitionChain Compiled service definitions
-     */
-    public function getCompiledServiceDefinitions()
-    {
-        return $this->doppo->getCompiledServiceDefinitions();
-    }
-
-    /**
-     * Return compiled parameter definitions
-     *
-     * @return ParameterDefinitionChain Compiled parameter definitions
-     */
-    public function getCompiledParameterDefinitions()
-    {
-        return $this->doppo->getCompiledParameterDefinitions();
     }
 
     /**
@@ -104,14 +89,20 @@ class LoggableDoppo implements ContainerInterface
      */
     public function get($serviceName)
     {
-        $this->logDebugContainerAction(sprintf('Service %s requested', $serviceName));
+        if ($this->container->isDebug()) {
+
+            $this->logDebugContainerAction(sprintf('Service %s requested', $serviceName));
+        }
 
         try {
-            $serviceInstance = $this->doppo->get($serviceName);
+            $serviceInstance = $this->container->get($serviceName);
 
         } catch (Exception $e) {
 
-            $this->logErrorContainerAction(sprintf('Service %s requested and not found', $serviceName));
+            if ($this->container->isDebug()) {
+
+                $this->logErrorContainerAction(sprintf('Service %s requested and not found', $serviceName));
+            }
             throw $e;
         }
 
@@ -129,18 +120,33 @@ class LoggableDoppo implements ContainerInterface
      */
     public function getParameter($parameterName)
     {
-        $this->logDebugContainerAction(sprintf('Parameter %s requested', $parameterName));
+        if ($this->container->isDebug()) {
+
+            $this->logDebugContainerAction(sprintf('Parameter %s requested', $parameterName));
+        }
 
         try {
-            $parameterValue = $this->doppo->getParameter($parameterName);
+            $parameterValue = $this->container->getParameter($parameterName);
 
         } catch (Exception $e) {
 
-            $this->logErrorContainerAction(sprintf('Parameter %s requested and not found', $parameterName));
+            if ($this->container->isDebug()) {
+
+                $this->logErrorContainerAction(sprintf('Parameter %s requested and not found', $parameterName));
+            }
+
             throw $e;
         }
 
         return $parameterValue;
+    }
+
+    /**
+     * Is debug
+     */
+    public function isDebug()
+    {
+        return $this->container->isDebug();
     }
 
     /**

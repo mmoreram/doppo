@@ -64,7 +64,7 @@ class Cache
      */
     public function build()
     {
-        $templateFile = dirname(__FILE__) . '/Templates/doppo.cache.php';
+        $templateFile = dirname(__FILE__) . '/Templates/doppo.cache.php.template';
         $cacheContent = file_get_contents($templateFile);
         $cacheContent = str_replace(
             array(

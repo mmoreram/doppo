@@ -25,20 +25,6 @@ class ServiceDefinition
     /**
      * @var string
      *
-     * Scope public
-     */
-    const SCOPE_PUBLIC = 'public';
-
-    /**
-     * @var string
-     *
-     * Scope private
-     */
-    const SCOPE_PRIVATE = 'private';
-
-    /**
-     * @var string
-     *
      * Parameter name
      */
     private $name;
@@ -56,13 +42,6 @@ class ServiceDefinition
      * Argument chain
      */
     private $argumentChain;
-
-    /**
-     * @var String
-     *
-     * Scope
-     */
-    private $scope = self::SCOPE_PUBLIC;
 
     /**
      * Construct method
@@ -110,29 +89,5 @@ class ServiceDefinition
     public function getName()
     {
         return $this->name;
-    }
-
-    /**
-     * Sets Scope
-     *
-     * @param String $scope Scope
-     *
-     * @return $this Self object
-     */
-    public function setScope($scope)
-    {
-        $this->scope = $scope;
-
-        return $this;
-    }
-
-    /**
-     * Get Scope
-     *
-     * @return String Scope
-     */
-    public function getScope()
-    {
-        return $this->scope;
     }
 }

@@ -34,7 +34,7 @@ class DoppoTest extends AbstractDoppoTest
      */
     public function getDoppoInstance(array $configuration)
     {
-        return new Doppo($configuration);
+        return new Doppo($configuration, true);
     }
 
     /**
@@ -48,7 +48,7 @@ class DoppoTest extends AbstractDoppoTest
         $doppo = $this
             ->getMockBuilder('Doppo\Doppo')
             ->setMethods(array('buildExistentService'))
-            ->setConstructorArgs(array($this->standardConfiguration))
+            ->setConstructorArgs(array($this->standardConfiguration, false))
             ->getMock();
 
         $doppo
