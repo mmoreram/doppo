@@ -19,13 +19,13 @@ use Exception;
 use PHPUnit_Framework_TestCase;
 use Psr\Log\LoggerInterface;
 
-use Doppo\Decorator\LoggableDoppoDecorator;
+use Doppo\Decorator\LoggableDecorator;
 use Doppo\Interfaces\ContainerInterface;
 
 /**
- * Class LoggableDoppoDecoratorTest
+ * Class LoggableDecoratorTest
  */
-class LoggableDoppoDecoratorTest extends PHPUnit_Framework_TestCase
+class LoggableDecoratorTest extends PHPUnit_Framework_TestCase
 {
     /**
      * @var LoggerInterface
@@ -54,7 +54,7 @@ class LoggableDoppoDecoratorTest extends PHPUnit_Framework_TestCase
      *
      * @param boolean $debug Debug mode
      *
-     * @return LoggableDoppoDecorator Decorator
+     * @return LoggableDecorator Decorator
      */
     public function getDoppoInstance($debug)
     {
@@ -65,7 +65,7 @@ class LoggableDoppoDecoratorTest extends PHPUnit_Framework_TestCase
             ->method('isDebug')
             ->will($this->returnValue($debug));
 
-        return new LoggableDoppoDecorator(
+        return new LoggableDecorator(
             $this->container,
             $this->logger
         );

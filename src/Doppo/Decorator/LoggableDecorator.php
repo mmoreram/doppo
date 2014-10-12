@@ -21,9 +21,9 @@ use Psr\Log\LoggerInterface;
 use Doppo\Interfaces\ContainerInterface;
 
 /**
- * Class LoggableDoppoDecorator
+ * Class LoggableDecorator
  */
-class LoggableDoppoDecorator implements ContainerInterface
+class LoggableDecorator implements ContainerInterface
 {
     /**
      * @var ContainerInterface

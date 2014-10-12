@@ -15,7 +15,6 @@
 
 namespace Doppo\Tests\Abstracts;
 
-use Exception;
 use PHPUnit_Framework_TestCase;
 
 use Doppo\Interfaces\ContainerInterface;
@@ -73,7 +72,7 @@ abstract class AbstractDoppoTest extends PHPUnit_Framework_TestCase
     /**
      * Test container compilation more than once
      *
-     * @expectedException Exception
+     * @expectedException \Doppo\Exception\DoppoAlreadyCompiledException
      */
     public function testCompileMoreThanOnce()
     {
@@ -86,7 +85,7 @@ abstract class AbstractDoppoTest extends PHPUnit_Framework_TestCase
      * Test error compilation
      *
      * @dataProvider dataCompilationFailure
-     * @expectedException Exception
+     * @expectedException \Doppo\Exception\Abstracts\DoppoCompilationException
      */
     public function testCompileFailure($config)
     {
@@ -176,7 +175,7 @@ abstract class AbstractDoppoTest extends PHPUnit_Framework_TestCase
     /**
      * Testing get method with bad values
      *
-     * @expectedException Exception
+     * @expectedException \Doppo\Exception\DoppoServiceNotExistsException
      */
     public function testGetFail()
     {
@@ -186,6 +185,7 @@ abstract class AbstractDoppoTest extends PHPUnit_Framework_TestCase
             ),
         ));
 
+        $doppo->compile();
         $doppo->get('foo');
     }
 
@@ -204,7 +204,7 @@ abstract class AbstractDoppoTest extends PHPUnit_Framework_TestCase
      * Testing get method with bad values
      *
      * @dataProvider dataGetParameterFail
-     * @expectedException Exception
+     * @expectedException \Doppo\Exception\DoppoParameterNotExistsException
      */
     public function testGetParameterFail($parameterName)
     {
@@ -226,5 +226,27 @@ abstract class AbstractDoppoTest extends PHPUnit_Framework_TestCase
             array(false),
             array(null),
         );
+    }
+
+    /**
+     * Testing get method with a non-compiled container
+     *
+     * @expectedException \Doppo\Exception\DoppoNotCompiledException
+     */
+    public function testGetWithoutCompile()
+    {
+        $doppo = $this->getDoppoInstance($this->standardConfiguration);
+        $doppo->get('foo');
+    }
+
+    /**
+     * Testing getParameter method with a non-compiled container
+     *
+     * @expectedException \Doppo\Exception\DoppoNotCompiledException
+     */
+    public function testGetParameterWithoutCompile()
+    {
+        $doppo = $this->getDoppoInstance($this->standardConfiguration);
+        $doppo->getParameter('my.parameter');
     }
 }

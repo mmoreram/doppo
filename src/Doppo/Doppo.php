@@ -27,6 +27,12 @@ use Doppo\Definition\ParameterDefinition;
 use Doppo\Definition\ParameterDefinitionChain;
 use Doppo\Definition\ServiceDefinition;
 use Doppo\Definition\ServiceDefinitionChain;
+use Doppo\Exception\DoppoAlreadyCompiledException;
+use Doppo\Exception\DoppoNotCompiledException;
+use Doppo\Exception\DoppoParameterNotExistsException;
+use Doppo\Exception\DoppoServiceArgumentNotExistsException;
+use Doppo\Exception\DoppoServiceClassNotFoundException;
+use Doppo\Exception\DoppoServiceNotExistsException;
 use Doppo\Interfaces\ContainerInterface;
 
 /**
@@ -34,15 +40,15 @@ use Doppo\Interfaces\ContainerInterface;
  *
  * ** Configuration reference
  *
- * $config = array(
+ * $debug = true;
+ * $configuration = array(
  *      'my_service' => array(
  *          'class' => 'My\Class\Namespace',
- *          'arguments => array(
+ *          'arguments' => array(
  *              '@my_other_service',
  *              '~my_parameter',
  *              'simple_value',
  *          ),
- *          "public" => true
  *      ),
  *      'my_other_service' => array(
  *          'class' => 'My\Class\Namespace',
@@ -52,7 +58,7 @@ use Doppo\Interfaces\ContainerInterface;
  *
  * ** Usage
  *
- * $doppo = new Doppo($config);
+ * $doppo = new Doppo($configuration, $debug);
  * $doppo->compile();
  *
  * $serviceInstance = $doppo->get('my_service');
@@ -134,13 +140,13 @@ class Doppo implements ContainerInterface
     /**
      * Compile container
      *
-     * @throws Exception Container already compiled
+     * @throws DoppoAlreadyCompiledException Container already compiled
      */
     public function compile()
     {
         if (true === $this->compiled) {
 
-            throw new Exception(
+            throw new DoppoAlreadyCompiledException(
                 'Container already compiled'
             );
         }
@@ -191,13 +197,18 @@ class Doppo implements ContainerInterface
      * @param string $serviceName          Service name
      * @param array  $serviceConfiguration Service configuration
      *
-     * @throws Exception Service class not found
+     * @throws DoppoServiceClassNotFoundException Service class not found
      */
     protected function compileService($serviceName, array $serviceConfiguration)
     {
         if (!class_exists($serviceConfiguration['class'])) {
 
-            throw new Exception(sprintf('Class %s not found', $serviceConfiguration['class']));
+            throw new DoppoServiceClassNotFoundException(
+                sprintf(
+                    'Class %s not found',
+                    $serviceConfiguration['class']
+                )
+            );
         }
 
         $arguments = isset($serviceConfiguration['arguments'])
@@ -333,6 +344,8 @@ class Doppo implements ContainerInterface
      * all the services and parameters we will work with.
      *
      * We will now check that all service arguments have correct references.
+     *
+     * @throws DoppoServiceArgumentNotExistsException service argument not found
      */
     protected function checkServiceArgumentsReferences()
     {
@@ -349,7 +362,7 @@ class Doppo implements ContainerInterface
 
                             if (!$this->services->has($argumentValue)) {
 
-                                throw new Exception(
+                                throw new DoppoServiceArgumentNotExistsException(
                                     sprintf(
                                         'Service "%s" not found in "@%s" arguments list',
                                         $argumentValue,
@@ -363,9 +376,9 @@ class Doppo implements ContainerInterface
 
                             if (!$this->parameters->has($argumentValue)) {
 
-                                throw new Exception(
+                                throw new DoppoServiceArgumentNotExistsException(
                                     sprintf(
-                                        'Service "%s" not found in "@%s" arguments list',
+                                        'Parameter "%s" not found in "@%s" arguments list',
                                         $argumentValue,
                                         $serviceDefinition->getName()
                                     )
@@ -425,10 +438,18 @@ class Doppo implements ContainerInterface
      *
      * @return mixed Service instance
      *
-     * @throws Exception Service not found
+     * @throws DoppoNotCompiledException      Container not compiled yet
+     * @throws DoppoServiceNotExistsException Service not found
      */
     public function get($serviceName)
     {
+        if (!$this->compiled) {
+
+            throw new DoppoNotCompiledException(
+                'Container should be compiled before being used'
+            );
+        }
+
         /**
          * The service is found as an instance, so we can be ensured that the
          * value inside this position is a valid Service instance
@@ -443,7 +464,7 @@ class Doppo implements ContainerInterface
          */
         if (!$this->services->has($serviceName)) {
 
-            throw new Exception(
+            throw new DoppoServiceNotExistsException(
                 sprintf(
                     'Service "%s" not found',
                     $serviceName
@@ -461,13 +482,21 @@ class Doppo implements ContainerInterface
      *
      * @return mixed Parameter value
      *
-     * @throws Exception Parameter not found
+     * @throws DoppoNotCompiledException        Container not compiled yet
+     * @throws DoppoParameterNotExistsException Parameter not found
      */
     public function getParameter($parameterName)
     {
+        if (!$this->compiled) {
+
+            throw new DoppoNotCompiledException(
+                'Container should be compiled before being used'
+            );
+        }
+
         if (!$this->parameters->has($parameterName)) {
 
-            throw new Exception(
+            throw new DoppoParameterNotExistsException(
                 sprintf(
                     'Parameter "%s" not found',
                     $parameterName

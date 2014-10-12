@@ -18,6 +18,7 @@ namespace Doppo;
 use Exception;
 
 use Doppo\Cache\Cache;
+use Doppo\Exception\DoppoAlreadyCompiledException;
 use DoppoCache;
 
 /**
@@ -60,13 +61,13 @@ class CacheableDoppo extends Doppo
     /**
      * Compile container
      *
-     * @throws Exception Container already compiled
+     * @throws DoppoAlreadyCompiledException Container already compiled
      */
     public function compile()
     {
         if (true === $this->compiled) {
 
-            throw new Exception(
+            throw new DoppoAlreadyCompiledException(
                 'Container already compiled'
             );
         }
