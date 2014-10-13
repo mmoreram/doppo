@@ -48,8 +48,7 @@ class LoggableDecorator implements ContainerInterface
     public function __construct(
         ContainerInterface $container,
         LoggerInterface $logger
-    )
-    {
+    ) {
         $this->container = $container;
         $this->logger = $logger;
     }
@@ -60,20 +59,15 @@ class LoggableDecorator implements ContainerInterface
     public function compile()
     {
         if ($this->container->isDebug()) {
-
             $this->logDebugContainerAction('Compiling container');
         }
 
         try {
-
             $this->container->compile();
         } catch (Exception $e) {
-
             if ($this->container->isDebug()) {
-
                 $this->logErrorContainerAction('Container compilation failed');
             }
-
             throw $e;
         }
     }
@@ -90,15 +84,12 @@ class LoggableDecorator implements ContainerInterface
     public function get($serviceName)
     {
         if ($this->container->isDebug()) {
-
             $this->logDebugContainerAction(sprintf('Service %s requested', $serviceName));
         }
 
         try {
             $serviceInstance = $this->container->get($serviceName);
-
         } catch (Exception $e) {
-
             if ($this->container->isDebug()) {
 
                 $this->logErrorContainerAction(sprintf('Service %s requested and not found', $serviceName));
@@ -121,20 +112,15 @@ class LoggableDecorator implements ContainerInterface
     public function getParameter($parameterName)
     {
         if ($this->container->isDebug()) {
-
             $this->logDebugContainerAction(sprintf('Parameter %s requested', $parameterName));
         }
 
         try {
             $parameterValue = $this->container->getParameter($parameterName);
-
         } catch (Exception $e) {
-
             if ($this->container->isDebug()) {
-
                 $this->logErrorContainerAction(sprintf('Parameter %s requested and not found', $parameterName));
             }
-
             throw $e;
         }
 
@@ -158,7 +144,8 @@ class LoggableDecorator implements ContainerInterface
     {
         $this
             ->logger
-            ->debug($log);
+            ->debug($log)
+        ;
     }
 
     /**
@@ -170,6 +157,7 @@ class LoggableDecorator implements ContainerInterface
     {
         $this
             ->logger
-            ->error($log);
+            ->error($log)
+        ;
     }
 }
