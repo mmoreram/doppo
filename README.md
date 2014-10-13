@@ -9,13 +9,12 @@ Doppo, Dependency Injection Container for PHP
 
 Oh, no way... another Dependency Injection container written in PHP?
 
-Well, in fact it is, but the purpose of this project is not to be used in
-production, but discuss some interesting topics about what is the best approach
-to build a Dependency Injection Container.
+Well, in fact it is, but the purpose of this project is academic, to discuss some interesting topics about what is the
+best approach the building of a Dependency Injection Container.
 
 Doppo is a basic DIC implementation, with some features (nothing new, just what
 I think is the most important and useful) implemented. Is developed using TDD,
-with several refactoring iterations through many architectural changes.
+with several refactoring iterations through several architectural changes.
 
 So, what is all about? Let's take a look at the features.
 
