@@ -49,8 +49,7 @@ class CacheableDoppo extends Doppo
         array $configuration,
         $debug,
         $cacheFile
-    )
-    {
+    ) {
         parent::__construct($configuration, $debug);
 
         $this->cacheFile = $cacheFile;
@@ -97,7 +96,6 @@ class CacheableDoppo extends Doppo
     private function warmUpCache()
     {
         if (file_exists($this->cacheFile)) {
-
             unlink($this->cacheFile);
         }
 
@@ -122,6 +120,7 @@ class CacheableDoppo extends Doppo
 
         return $this->serviceInstances[$serviceName] = $this
             ->doppoCache
-            ->$methodName();
+            ->$methodName()
+        ;
     }
 }
