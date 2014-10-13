@@ -51,8 +51,7 @@ class Cache
     public function __construct(
         ServiceDefinitionChain $serviceDefinitionChain,
         ParameterDefinitionChain $parameterDefinitionChain
-    )
-    {
+    ) {
         $this->serviceDefinitionChain = $serviceDefinitionChain;
         $this->parameterDefinitionChain = $parameterDefinitionChain;
     }
