@@ -77,7 +77,7 @@ class CacheableDoppo extends Doppo
         }
 
         require_once $this->cacheFile;
-        $this->doppoCache = new DoppoCache;
+        $this->doppoCache = new DoppoCache();
     }
 
     /**
