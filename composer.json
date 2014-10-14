@@ -2,9 +2,7 @@
     "name": "mmoreram/doppo",
     "type": "library",
     "description": "Small Dependency Injection container",
-    "keywords": [
-        "php", "dependency injection"
-    ],
+    "keywords": ["php", "dependency injection"],
     "license": "MIT",
     "authors": [
         {
@@ -17,10 +15,10 @@
         "psr/log": "*"
     },
     "autoload": {
-        "psr-4": {"Doppo\\": "src/Doppo"}
+        "psr-4": {"Doppo\\": "src"}
     },
     "autoload-dev": {
-        "psr-4": {"Doppo\\Tests\\": "tests/Doppo"}
+        "psr-4": {"Doppo\\Tests\\": "tests"}
     },
     "extra": {
         "branch-alias": {
